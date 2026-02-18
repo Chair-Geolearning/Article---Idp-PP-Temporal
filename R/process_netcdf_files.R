@@ -2,12 +2,12 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
                                  save_intermediate = TRUE, output_dir = "data/processed",
                                  n_cores = NULL, use_parallel = TRUE) {
   
-  # Déterminer le nombre de cœurs
+
   if (is.null(n_cores)) {
     n_cores <- max(1, parallel::detectCores() - 1)
   }
   
-  # Créer le dossier de sortie si nécessaire
+ 
   if (save_intermediate && !dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
   }
@@ -21,17 +21,14 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
   cat(sprintf("  - Sauvegarde intermédiaire: %s\n", ifelse(save_intermediate, "OUI", "NON")))
   cat(sprintf("========================================\n\n"))
   
-  # Fonction pour traiter un fichier individuel
   process_single_file <- function(var_name, year, nuts, nuts_level, output_dir) {
     
-    # Déterminer le nom de fichier selon la variable
     if (grepl("temperature", var_name)) {
       filename <- paste0("data/2m_temperature_daily_mean_", year, ".nc")
     } else {
       filename <- paste0("data/", var_name, "_", year, ".nc")
     }
     
-    # Vérifier si le fichier existe
     if (!file.exists(filename)) {
       return(list(
         success = FALSE,
@@ -41,7 +38,6 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
       ))
     }
     
-    # Vérifier si déjà traité
     output_file <- file.path(output_dir, paste0(var_name, "_", year, ".rds"))
     if (file.exists(output_file)) {
       return(list(
@@ -55,13 +51,10 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
     }
     
     tryCatch({
-      # Charger les données NetCDF
       raw_data <- load_nc_data(filename)
       
-      # Prétraiter les données
       df <- preprocess_data(raw_data, var_name)
       
-      # Ajouter les NUTS
       points_sf <- st_as_sf(df, coords = c("lon", "lat"), crs = 4326)
       points_nuts <- st_join(points_sf, nuts, join = st_intersects)
       df$nuts_id <- points_nuts$NUTS_ID
@@ -69,7 +62,6 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
       
       df <- df[complete.cases(df), ]
       
-      # Sauvegarder
       saveRDS(df, output_file)
       
       return(list(
@@ -91,14 +83,12 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
     })
   }
   
-  # Fonction de chargement des données NetCDF (copie de la fonction originale)
   load_nc_data <- function(file_path) {
     nc_data <- nc_open(file_path)
     on.exit(nc_close(nc_data))
     
     vars <- names(nc_data$var)
     
-    # Déterminer la variable principale en fonction du nom de fichier
     main_var <- NULL
     
     if (grepl("precipitation", file_path)) {
@@ -132,7 +122,6 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
       }
     }
     
-    # Extraire les données principales
     main_data <- NULL
     tryCatch({
       main_data <- ncvar_get(nc_data, main_var)
@@ -159,7 +148,6 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
       stop(paste("Impossible d'extraire les données du fichier:", file_path))
     }
     
-    # Rechercher les variables de coordonnées
     find_coord_var <- function(possible_names) {
       match <- vars[vars %in% possible_names]
       if (length(match) > 0) return(match[1]) else return(NA)
@@ -192,7 +180,6 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
       lat_data <- seq(35, 70, length.out = data_dims[2])
     }
     
-    # Traitement des dates
     dates <- NULL
     if (!is.null(time_data) && !is.na(time_var)) {
       time_units <- tryCatch(
@@ -234,7 +221,6 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
     )
   }
   
-  # Fonction de prétraitement (copie de la fonction originale)
   preprocess_data <- function(raw_data, var_name) {
     data_dims <- dim(raw_data$data)
     
@@ -309,18 +295,15 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
     }
   }
   
-  # Charger les NUTS une seule fois
   nuts <- gisco_get_nuts(year = "2021", resolution = "60", nuts_level = nuts_level) %>%
     st_transform(4326)
   
-  # Créer la liste de toutes les tâches
   tasks <- expand.grid(
     var_name = var_names,
     year = years,
     stringsAsFactors = FALSE
   )
   
-  # Traitement parallèle ou séquentiel
   if (use_parallel && n_cores > 1) {
     library(parallel)
     library(doParallel)
@@ -359,7 +342,6 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
         output_dir = output_dir
       )
       
-      # Affichage de la progression
       if (result$success && !result$skipped) {
         cat(sprintf("[%d/%d] ✓ %s - %s (%d rows)\n", 
                     i, nrow(tasks), result$var_name, result$year, result$rows))
@@ -375,7 +357,6 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
     })
   }
   
-  # Résumé des résultats
   n_success <- sum(sapply(results, function(x) x$success && !x$skipped))
   n_skipped <- sum(sapply(results, function(x) x$success && x$skipped))
   n_failed <- sum(sapply(results, function(x) !x$success))
@@ -388,7 +369,6 @@ process_netcdf_files <- function(var_names, years = NULL, nuts_level = 2,
   cat(sprintf("  - Fichiers sauvegardés dans: %s\n", output_dir))
   cat(sprintf("========================================\n\n"))
   
-  # Créer un résumé par variable
   summary_list <- list()
   for (var_name in var_names) {
     var_results <- results[sapply(results, function(x) x$var_name == var_name)]
