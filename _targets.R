@@ -1079,7 +1079,7 @@ tar_target(
       out_dir = "output/graphe_k/FWI/CATALONIA_DIR_COV_TO_FWI"
     )
   },
-  pattern = map(fwi_jobs_dir_cov_to_fwi),  # <-- OK, car fwi_jobs_dir_cov_to_fwi est un tar_target
+  pattern = map(fwi_jobs_dir_cov_to_fwi),  
   iteration = "list"
 ),
 tar_target(
