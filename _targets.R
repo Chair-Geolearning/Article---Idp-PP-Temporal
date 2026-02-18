@@ -422,7 +422,7 @@ tar_target(
       nuts_ref    = nuts_ref_code,
       nuts_target = job$nuts_target,
       sim_method  = "translation",
-      alternative = "less",     # <--- inhibition
+      alternative = "less",   
       r_value     = r_value_pw,
       n_sim       = 999,
       kde_bw      = 0.08,
@@ -457,9 +457,7 @@ tar_target(
 
 #FWI ==============================================================================
 
-===============================
-  REGION : AQUITAINE
-===============================
+
 FWI_COVARIATES <- c("Temperature", "Humidity", "Windspeed", "Radiation", "API", "VPD")
 #
 # # ======================================================================
