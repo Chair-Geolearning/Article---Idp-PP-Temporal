@@ -3,7 +3,6 @@ library(targets)
 library(future)
 library(future.callr)
 
-# Setup future avec 40 workers
 # plan(multisession, workers = 30)
 
 tar_option_set(
@@ -14,7 +13,6 @@ tar_option_set(
   memory = "transient",
   format = "qs",
   seed = 1995
-  # PAS de controller
 )
 
 #################################################################################################
@@ -62,59 +60,16 @@ list(
     )
   ),
 
-  tar_target(
-    all_extremes,
-    process_all_variables(
-      years = 1941:2024,
-      input_dir = "data/processed",
-      output_dir = "data/extremes",
-      quantile_precip = 0.90,  # Q90 pour précipitations
-      quantile_cape = 0.99,    # Q99 pour CAPE
-      quantile_wind = 0.99     # Q99 pour vent
-    )
-  ),
-  tar_target(
-    all_extremes95,
-    process_all_variables(
-      years = 1941:2024,
-      input_dir = "data/processed",
-      output_dir = "data/extremes",
-      quantile_precip = 0.95,  # Q90 pour précipitations
-      quantile_cape = 0.99,    # Q99 pour CAPE
-      quantile_wind = 0.99     # Q99 pour vent
-    )
-  ),
-  tar_target(
-    all_extremes99,
-    process_all_variables(
-      years = 1941:2024,
-      input_dir = "data/processed",
-      output_dir = "data/extremes",
-      quantile_precip = 0.99,  # Q90 pour précipitations
-      quantile_cape = 0.99,    # Q99 pour CAPE
-      quantile_wind = 0.99     # Q99 pour vent
-    )
-  ),
-  tar_target(
-    all_extremes98,
-    process_all_variables(
-      years = 1941:2024,
-      input_dir = "data/processed",
-      output_dir = "data/extremes",
-      quantile_precip = 0.98,  # Q98 pour précipitations
-      quantile_cape = 0.99,    # Q99 pour CAPE
-      quantile_wind = 0.99     # Q99 pour vent
-    )
-  ),
+
   tar_target(
     all_extremes999,
     process_all_variables(
       years = 1941:2024,
       input_dir = "data/processed",
       output_dir = "data/extremes",
-      quantile_precip = 0.995,  # Q98 pour précipitations
-      quantile_cape = 0.995,    # Q99 pour CAPE
-      quantile_wind = 0.995     # Q99 pour vent
+      quantile_precip = 0.995, 
+      quantile_cape = 0.995,  
+      quantile_wind = 0.995    
     )
   ),
   # tar_target(
@@ -427,8 +382,6 @@ list(
 
   ,
 
-# # --- PARAM ---
-# --- PARAM ---
 tar_target(
   var_precip_only,
   "Severe precipitation",
